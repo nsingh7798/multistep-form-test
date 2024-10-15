@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -11,8 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import {personalInfoSchema, locationSchema, paymentSchema} from "../lib/schemas"
 import { validateExpiryDate, formatExpiryDate, formatCardNumber } from "../lib/formUtils"
+import { useFetcher } from '@remix-run/react'
+import { Skeleton } from './ui/skeleton'
+import countriesData from '../lib/countriesData'
 
 export default function Summary({ formData, onUpdate, countries }) {
+  const [cities, setCities] = useState([])
+  const fetcher = useFetcher()
   const [editMode, setEditMode] = useState({
     personalInfo: false,
     location: false,
@@ -46,6 +51,19 @@ export default function Summary({ formData, onUpdate, countries }) {
       billingAddress: formData.billingAddress,
     },
   })
+
+  useEffect(() => {
+    if (editMode.location && formData.country) {
+      const countryCode = countriesData.find(el => el.name == formData.country)
+      fetcher.load(`/api/cities?countryCode=${countryCode.isoCode}`)
+    }
+  }, [editMode.location, formData.country])
+
+  useEffect(() => {
+    if (fetcher.data && fetcher.data.cities) {
+      setCities(fetcher.data.cities)
+    }
+  }, [fetcher.data])
 
   const handleEdit = (section) => {
     setEditMode({ ...editMode, [section]: true })
@@ -141,9 +159,9 @@ export default function Summary({ formData, onUpdate, countries }) {
         <CardHeader>
           <CardTitle className="flex justify-between">
             Location
-            {/* {!editMode.location && (
+            {!editMode.location && (
               <Button onClick={() => handleEdit('location')}>Edit</Button>
-            )} */}
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -156,7 +174,15 @@ export default function Summary({ formData, onUpdate, countries }) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Country</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select 
+                        onValueChange={(value) => {
+                          field.onChange(value)
+                          locationForm.setValue('city', '')
+                          const countryCode = countriesData.find(el => el.name == value)
+                          fetcher.load(`/api/cities?countryCode=${countryCode.isoCode}`)
+                        }}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a country" />
@@ -180,9 +206,30 @@ export default function Summary({ formData, onUpdate, countries }) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>City</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a city" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {fetcher.state === 'loading' ? (
+                            <div className="space-y-2">
+                              <Skeleton className="h-4 w-[250px]" />
+                              <Skeleton className="h-4 w-[200px]" />
+                            </div>
+                          ) : (
+                            cities.map((city) => (
+                              <SelectItem key={city.code} value={city.name}>
+                                {city.name}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
