@@ -20,10 +20,15 @@ export default function MultiStepForm({ countries }) {
 
   useEffect(() => {
     const storedData = getFormData();
+    console.log("storedData", storedData)
     if (storedData) {
       setFormDataState(storedData);
     }
   }, []);
+
+  useEffect(() => {
+    console.log("formData", formData)
+  }, [formData])
 
   const handleNext = (data) => {
     const updatedFormData = { ...formData, ...data };

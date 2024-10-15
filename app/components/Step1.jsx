@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -19,6 +19,17 @@ export default function Step1({ onNext, initialData }) {
       phone: initialData?.phone || '',
     },
   })
+
+  useEffect(() => {
+    if (initialData?.firstName) {
+      form.reset({
+        firstName: initialData.firstName || '',
+        lastName: initialData.lastName || '',
+        email: initialData.email || '',
+        phone: initialData.phone || '',
+      })
+    }
+  }, [initialData])
 
   const firstNameRef = useRef(null)
   const lastNameRef = useRef(null)
