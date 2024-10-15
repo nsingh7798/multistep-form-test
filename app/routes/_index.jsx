@@ -2,6 +2,7 @@ import { Await, defer, json, useLoaderData } from "@remix-run/react";
 import { Skeleton } from "../components/ui/skeleton"
 import StepForm from "../components/StepForm"
 import { Suspense } from "react";
+import countriedData from "../lib/countriesData"
 
 export const meta = () => {
   return [
@@ -11,12 +12,9 @@ export const meta = () => {
 };
 
 async function getCountries() {
-  // If no cached data, fetch from the API
-  const response = await fetch('https://restcountries.com/v3.1/all');
-  const data = await response.json();
-  const countries = data.map(country => ({
-    name: country.name.common,
-    code: country.cca2,
+  const countries = countriedData.map(country => ({
+    name: country.name,
+    code: country.isoCode,
   }));
 
   return countries;

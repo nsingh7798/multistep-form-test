@@ -32,7 +32,7 @@ export default function Step2({ onNext, initialData, countries }) {
 
   useEffect(() => {
     if (initialData?.country) {
-      handleCountryChange(initialData.country);
+      handleCountryChange(initialData.country, false);
     }
   }, [initialData])
 
@@ -40,9 +40,11 @@ export default function Step2({ onNext, initialData, countries }) {
     onNext(data)
   }
 
-  const handleCountryChange = (value) => {
+  const handleCountryChange = (value, resetCity = true) => {
     form.setValue('country', value)
-    form.setValue('city', '')
+    if(resetCity){
+      form.setValue('city', '')
+    }
     const selectedCountry = countries.find(country => country.name === value);
     if (selectedCountry) {
       fetcher.load(`/api/cities?countryCode=${selectedCountry.code}`);

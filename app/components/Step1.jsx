@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useRef } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -26,21 +26,46 @@ export default function Step1({ onNext, initialData }) {
   const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
+      firstName: initialData?.firstName || '',
+      lastName: initialData?.lastName || '',
+      email: initialData?.email || '',
+      phone: initialData?.phone || '',
     },
   })
 
-  useEffect(() => {
-    if (initialData) {
-      form.reset(initialData);
-    }
-  }, [initialData, form]);
+  const firstNameRef = useRef(null)
+  const lastNameRef = useRef(null)
+  const emailRef = useRef(null)
+  const phoneRef = useRef(null)
+  const submitButtonRef = useRef(null)
 
   const onSubmit = (data) => {
     onNext(data)
+  }
+
+  const handleKeyDown = (event, nextRef) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      const currentValue = event.target.value
+      const currentId = event.target.id
+
+      if (currentValue.trim() === '' && nextRef) {
+        return // Don't move to next field if current field is empty
+      }
+
+      if (nextRef) {
+        nextRef.current.focus()
+      } else {
+        // All fields are filled, submit the form
+        const allFieldsFilled = ['firstName', 'lastName', 'email'].every(
+          field => form.getValues(field).trim() !== ''
+        )
+        console.log("allFieldsFilled", allFieldsFilled)
+        if (allFieldsFilled) {
+          submitButtonRef.current.click()
+        }
+      }
+    }
   }
 
   return (
@@ -53,7 +78,11 @@ export default function Step1({ onNext, initialData }) {
             <FormItem>
               <FormLabel>First Name</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input
+                  {...field}
+                  ref={firstNameRef}
+                  onKeyDown={(e) => handleKeyDown(e, lastNameRef)}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -66,7 +95,11 @@ export default function Step1({ onNext, initialData }) {
             <FormItem>
               <FormLabel>Last Name</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input
+                  {...field}
+                  ref={lastNameRef}
+                  onKeyDown={(e) => handleKeyDown(e, emailRef)}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -79,7 +112,12 @@ export default function Step1({ onNext, initialData }) {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input {...field} type="email" />
+                <Input
+                  {...field}
+                  type="email"
+                  ref={emailRef}
+                  onKeyDown={(e) => handleKeyDown(e, phoneRef)}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -92,13 +130,17 @@ export default function Step1({ onNext, initialData }) {
             <FormItem>
               <FormLabel>Phone (optional)</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input
+                  {...field}
+                  ref={phoneRef}
+                  onKeyDown={(e) => handleKeyDown(e, null)}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit">Next</Button>
+        <Button type="submit" ref={submitButtonRef}>Next</Button>
       </form>
     </Form>
   )
