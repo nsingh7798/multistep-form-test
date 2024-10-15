@@ -8,22 +8,14 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from "./ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-
-const schema = z.object({
-  country: z.string().min(1, 'Please select a country'),
-  city: z.string().min(1, 'Please select a city'),
-})
-
-export async function loader() {
-    console.log(process.env.GEODB_KEY);
-}
+import { locationSchema } from '../lib/schemas'
 
 export default function Step2({ onNext, initialData, countries }) {
     const fetcher = useFetcher();
   //const [cities, setCities] = useState([])
 
   const form = useForm({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(locationSchema),
     defaultValues: {
       country: initialData?.country || '',
       city: initialData?.city || '',

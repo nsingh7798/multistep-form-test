@@ -7,17 +7,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from "./ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form"
 import { Input } from "./ui/input"
-
-const schema = z.object({
-  cardNumber: z.string().regex(/^(\d{4}\s?){4}$/, 'Invalid card number'),
-  expiryDate: z.string().regex(/^(0[1-9]|1[0-2])\/[0-9]{2}$/, 'Invalid expiry date (MM/YY)'),
-  cvv: z.string().regex(/^[0-9]{3,4}$/, 'Invalid CVV'),
-  billingAddress: z.string().min(5, 'Billing address is required'),
-})
+import { paymentSchema } from '../lib/schemas'
+import { validateExpiryDate, formatExpiryDate, formatCardNumber } from "../lib/formUtils"
 
 export default function Step3({ onNext, initialData }) {
   const form = useForm({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(paymentSchema),
     defaultValues: {
       cardNumber: '',
       expiryDate: '',
@@ -31,31 +26,6 @@ export default function Step3({ onNext, initialData }) {
         form.setValue('billingAddress', initialData.billingAddress || '');
     }
   }, [initialData, form]);
-
-  const formatCardNumber = (value) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '')
-    const matches = v.match(/\d{4,16}/g)
-    const match = (matches && matches[0]) || ''
-    const parts = []
-
-    for (let i = 0, len = match.length; i < len; i += 4) {
-      parts.push(match.substring(i, i + 4))
-    }
-
-    if (parts.length) {
-      return parts.join(' ')
-    } else {
-      return value
-    }
-  }
-
-  const formatExpiryDate = (value) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '')
-    if (v.length >= 2) {
-      return `${v.slice(0, 2)}/${v.slice(2, 4)}`
-    }
-    return v
-  }
 
   const onSubmit = (data) => {
     onNext(data)
@@ -94,11 +64,16 @@ export default function Step3({ onNext, initialData }) {
                   placeholder="MM/YY"
                   maxLength={5}
                   onChange={(e) => {
-                    let value = e.target.value.replace(/[^0-9]/g, '')
-                    if (value.length > 2) {
-                      value = value.slice(0, 2) + '/' + value.slice(2)
-                    }
+                    let value = formatExpiryDate(e.target.value)
                     field.onChange(value)
+                    if (value.length === 5 && !validateExpiryDate(value)) {
+                      form.setError('expiryDate', {
+                        type: 'manual',
+                        message: 'Expiry date must be in the future'
+                      })
+                    } else {
+                      form.clearErrors('expiryDate')
+                    }
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Backspace' && e.target.value.endsWith('/')) {

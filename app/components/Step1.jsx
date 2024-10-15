@@ -7,24 +7,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from "./ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form"
 import { Input } from "./ui/input"
-
-const phoneNumberSchema = z.string().refine(
-  (value) => value === '' || /^\d{10}$/.test(value),
-  {
-    message: 'Phone number must be empty or contain exactly 10 digits',
-  }
-);
-
-const schema = z.object({
-  firstName: z.string().min(2, 'First name must be at least 2 characters'),
-  lastName: z.string().min(2, 'Last name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
-  phone: phoneNumberSchema.optional(),
-})
+import { personalInfoSchema } from '../lib/schemas'
 
 export default function Step1({ onNext, initialData }) {
   const form = useForm({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(personalInfoSchema),
     defaultValues: {
       firstName: initialData?.firstName || '',
       lastName: initialData?.lastName || '',
