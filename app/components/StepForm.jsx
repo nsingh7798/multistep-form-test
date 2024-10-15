@@ -51,7 +51,10 @@ export default function MultiStepForm({ countries }) {
       case 2:
         return <Step3 onNext={handleNext} initialData={formData} />
       case 3:
-        return <Summary formData={formData} />
+        return <Summary formData={formData} 
+          onUpdate={(newData) => setFormDataState(newData)}
+          countries={countries} 
+        />
       default:
         return null
     }
